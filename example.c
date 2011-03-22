@@ -3,6 +3,8 @@
 
 #include <CL/cl.h>
 
+#include "clrand.h"
+
 const char *source = "__kernel void increment(__global int *input, __global int *output) {	int tid = get_global_id(0);	output[tid] = input[tid] + 1;}";
 
 const int BUF_SIZE = 1024;
@@ -29,6 +31,8 @@ int main() {
 	cl_mem input;
 	cl_mem output;
 
+	clrand_context rnd;
+	
 	error = clGetPlatformIDs(1, &platform, NULL);
 	check_for_error(error, "Can not get platforms id");
 
@@ -47,6 +51,7 @@ int main() {
 	error = clBuildProgram(program, 0, NULL, NULL, NULL, NULL);
 	check_for_error(error, "Can not build program");
 
+	clrand_init(&rnd, context, queue);
 	increment_kernel = clCreateKernel(program, "increment", &error);
 	check_for_error(error, "Can not create kernel");
 
@@ -88,6 +93,9 @@ int main() {
 		printf("Wrong!\n");
 	}
 	free(data);
+
+	//releasing clrand
+	clrand_release(&rnd);
 
 	//releasing OpenCL objects
 	clReleaseMemObject(input);
