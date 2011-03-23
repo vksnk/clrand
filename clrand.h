@@ -19,4 +19,6 @@ void check_for_error(cl_int error, char *error_message);
 int clrand_init(clrand_context* ctx, cl_context cl_ctx, cl_command_queue queue, int parallel_thread_num);
 int clrand_release(clrand_context* ctx);
 
+int clrand_set_seed(clrand_context* ctx, int seed);
+
 int clrand_uniform(clrand_context* ctx, cl_mem buffer, cl_int buf_size);

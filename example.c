@@ -1,5 +1,6 @@
 #include <stdio.h>
 #include <stdlib.h>
+#include <time.h>
 
 #include <CL/cl.h>
 
@@ -7,7 +8,8 @@
 
 const char *source = "__kernel void increment(__global int *input, __global int *output) {	int tid = get_global_id(0);	output[tid] = input[tid] + 1;}";
 
-const int BUF_SIZE = 1024;
+const int BUF_SIZE = 32 * 1024*1024;
+const int HIST_SIZE = 256;
 
 int main() {
 	printf("Pseudo-random number generator using OpenCL example\n");
@@ -36,8 +38,8 @@ int main() {
 	queue = clCreateCommandQueue(context, device_id, 0, &error);
 	check_for_error(error, "Can not create command queue");
 
-	clrand_init(&rnd, context, queue, 256);
-	
+	clrand_init(&rnd, context, queue, 2048);
+	//clrand_set_seed(&rnd, time(NULL));
 
 	output = clCreateBuffer(context, CL_MEM_WRITE_ONLY, sizeof(int) * BUF_SIZE, NULL, NULL);
 
@@ -48,11 +50,18 @@ int main() {
 	clEnqueueReadBuffer(queue, output, CL_TRUE, 0, sizeof(int) * BUF_SIZE, data, 0, NULL, NULL);  
 	
 	int i;
-
-	for(i = 0; i < 384; i++) { 
-		printf("%d ", data[i]);
+	
+	//build and output histogram to check that distribution is really uniform
+	int hist[HIST_SIZE];
+	for(i = 0; i < HIST_SIZE; i++) hist[i] = 0;
+	for(i = 0; i < BUF_SIZE; i++) { 
+		//printf("%d ", data[i]);
+		int val = (int)((float)data[i] / RAND_MAX * HIST_SIZE);
+		hist[val]++;
 	}
 	
+	for(i = 0; i < HIST_SIZE; i++) printf("%d ", hist[i]);
+
 	free(data);
 
 	//releasing clrand

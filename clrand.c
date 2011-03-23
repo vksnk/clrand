@@ -62,7 +62,7 @@ int clrand_init(clrand_context* ctx, cl_context cl_ctx, cl_command_queue queue, 
 	char* content = (char* )malloc(sizeof(char) * (size + 1));
 	load_kernels(content, size);
 	
-	printf("%s", content);
+	//printf("%s", content);
 
 	ctx->program = clCreateProgramWithSource(ctx->context, 1, (const char**)&content, NULL, &error);
 	check_for_error(error, "clrand::Can not create program from sources");
