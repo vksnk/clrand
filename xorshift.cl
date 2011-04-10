@@ -1,14 +1,15 @@
-__kernel void uniform_rng(__global int4* context, __global int* output, int num_per_thread)
+__kernel void uniform_rng(__global uint4* context, __global uint* output, int len)
 {
+	int num_per_thread = len / get_global_size(0);
 	int tid = get_global_id(0);
 	
 	//read context from global memory
-	int4 ctx = context[tid];
+	uint4 ctx = context[tid];
 	uint4 mask = (uint4)(1, 2, 3, 0);
 	int base_offset = tid * num_per_thread;
 
 	for(int i = 0; i < num_per_thread; i++) {
-		int t = ctx.x ^ (ctx.x << 11);
+		uint t = ctx.x ^ (ctx.x << 11);
 		//ctx = shuffle(ctx, mask);
 		ctx.x = ctx.y;
 		ctx.y = ctx.z;

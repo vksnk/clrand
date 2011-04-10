@@ -40,8 +40,8 @@ int clrand_update_seed(clrand_context* ctx) {
 	
 	if(ctx->dev_seed) clReleaseMemObject(ctx->dev_seed);
 	//upload generated seed to GPU device
-	ctx->dev_seed = clCreateBuffer(ctx->context, CL_MEM_READ_ONLY, sizeof(int) * buffer_size, NULL, NULL);
-	error = clEnqueueWriteBuffer(ctx->queue, ctx->dev_seed, CL_TRUE, 0, sizeof(int) * buffer_size, buffer, 0, NULL, NULL);
+	ctx->dev_seed = clCreateBuffer(ctx->context, CL_MEM_READ_ONLY, sizeof(cl_uint) * buffer_size, NULL, NULL);
+	error = clEnqueueWriteBuffer(ctx->queue, ctx->dev_seed, CL_TRUE, 0, sizeof(cl_uint) * buffer_size, buffer, 0, NULL, NULL);
 	check_for_error(error, "Can not upload new seed");
 	free(buffer);
 }
