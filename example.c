@@ -48,7 +48,8 @@ void print_hist(unsigned int* data) {
 
 int main() {
 	printf("Pseudo-random number generator using OpenCL example\n");
-
+	float zzz = 1.0f;
+	printf("%1.20g\n", zzz / UINT_MAX );
 	cl_int error;
 	cl_int arg;
 
