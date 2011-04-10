@@ -1,9 +1,6 @@
 uint xorshift_int(uint4* ctx) {
 	uint t = ctx->x ^ (ctx->x << 11);
-	ctx->x = ctx->y;
-	ctx->y = ctx->z;
-	ctx->z = ctx->w;
-		
+	*ctx = ctx->yzww;
 	ctx->w = ctx->w ^ (ctx->w >> 19) ^ (t ^ (t >> 8));
 
 	return ctx->w;
@@ -13,10 +10,16 @@ float xorshift_float(uint4* ctx) {
 	return xorshift_int(ctx) * 2.3283064e-10;
 }
 
+#define M_MY_PI 3.14159265f
 float2 normal_box_muller(uint4* ctx) {
-	float u0 = xorshift_float(ctx);
 	float u1 = xorshift_float(ctx);
-	return 0;
+	float u2 = xorshift_float(ctx);
+
+	float ln_u1 = sqrt(-2.0f * ln(u1));
+
+	float p2_u2 = 2.0f * M_MY_PI * u2;
+	
+	return (ln_u1 * cos(p2_u2), ln_u1 * sin(p2_u2));
 }
 
 __kernel void uniform_rng(__global uint4* context, __global uint* output, int len)
