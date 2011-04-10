@@ -13,6 +13,12 @@ float xorshift_float(uint4* ctx) {
 	return xorshift_int(ctx) * 2.3283064e-10;
 }
 
+float2 normal_box_muller(uint4* ctx) {
+	float u0 = xorshift_float(ctx);
+	float u1 = xorshift_float(ctx);
+	return 0;
+}
+
 __kernel void uniform_rng(__global uint4* context, __global uint* output, int len)
 {
 	int num_per_thread = len / get_global_size(0);
