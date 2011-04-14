@@ -22,7 +22,7 @@ float2 normal_box_muller(uint4* ctx) {
 	return (ln_u1 * cos(p2_u2), ln_u1 * sin(p2_u2));
 }
 
-__kernel void uniform_rng(__global uint4* context, __global uint* output, int len)
+__kernel void uniform_int(__global uint4* context, __global uint* output, int len)
 {
 	int num_per_thread = len / get_global_size(0);
 	int tid = get_global_id(0);
@@ -33,6 +33,23 @@ __kernel void uniform_rng(__global uint4* context, __global uint* output, int le
 
 	for(int i = 0; i < num_per_thread; i++) {
 		output[base_offset + i] = xorshift_int(&ctx);
+	}
+
+	//save context back to global memory
+	context[tid] = ctx;
+}
+
+__kernel void uniform_float(__global uint4* context, __global float* output, int len)
+{
+	int num_per_thread = len / get_global_size(0);
+	int tid = get_global_id(0);
+	
+	//read context from global memory
+	uint4 ctx = context[tid];
+	int base_offset = tid * num_per_thread;
+
+	for(int i = 0; i < num_per_thread; i++) {
+		output[base_offset + i] = xorshift_float(&ctx);
 	}
 
 	//save context back to global memory

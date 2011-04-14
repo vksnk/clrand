@@ -7,9 +7,11 @@
 
 #include "clrand.h"
 
-const int BUF_SIZE =  1024*1024;
+const int BUF_SIZE =  1024 * 1024;
 const int HIST_SIZE = 16;
-const int THREAD_NUM = 64;
+const int THREAD_NUM = 256;
+
+#define DATA_TYPE float
 
 void xorshift_CPU(unsigned int* data) {
 	int i = 0;
@@ -29,15 +31,16 @@ void xorshift_CPU(unsigned int* data) {
 }
 
 //build and output histogram to check that distribution is really uniform	
-void print_hist(unsigned int* data) {
+void print_hist(DATA_TYPE* data) {
 	int i;
 	int val;
 	int hist[HIST_SIZE];
 	for(i = 0; i < HIST_SIZE; i++) hist[i] = 0;
 	printf("Buffer size: %d\n", BUF_SIZE * 4);
 	for(i = 0; i < BUF_SIZE; i++) { 
-		//printf("%u ", data[i]);
-		int val = (double)(data[i]) / UINT_MAX * HIST_SIZE;
+		//printf("%f ", data[i]);
+		//int val = (double)(data[i]) / UINT_MAX * HIST_SIZE;
+		int val = data[i] * HIST_SIZE;
 		hist[val]++;
 	}
 	printf("Histogram:: \n");
@@ -48,8 +51,7 @@ void print_hist(unsigned int* data) {
 
 int main() {
 	printf("Pseudo-random number generator using OpenCL example\n");
-	float zzz = 1.0f;
-	printf("%1.20g\n", zzz / UINT_MAX );
+	
 	cl_int error;
 	cl_int arg;
 
@@ -78,15 +80,15 @@ int main() {
 	clrand_init(&rnd, context, queue, THREAD_NUM);
 	//clrand_set_seed(&rnd, time(NULL));
 
-	output = clCreateBuffer(context, CL_MEM_WRITE_ONLY, sizeof(unsigned int) * BUF_SIZE, NULL, NULL);
+	output = clCreateBuffer(context, CL_MEM_WRITE_ONLY, sizeof(DATA_TYPE) * BUF_SIZE, NULL, NULL);
 
 
-	clrand_uniform(&rnd, output, BUF_SIZE);
+	clrand_uniform_float(&rnd, output, BUF_SIZE);
 	clFinish(queue);
 	clock_t gpu_end = clock();
 	
-	unsigned int *data = (unsigned int *)malloc(sizeof(unsigned int) * BUF_SIZE);
-	clEnqueueReadBuffer(queue, output, CL_TRUE, 0, sizeof(unsigned int) * BUF_SIZE, data, 0, NULL, NULL);  
+	DATA_TYPE *data = (DATA_TYPE *)malloc(sizeof(DATA_TYPE) * BUF_SIZE);
+	clEnqueueReadBuffer(queue, output, CL_TRUE, 0, sizeof(DATA_TYPE) * BUF_SIZE, data, 0, NULL, NULL);  
 	
 	print_hist(data);
 	

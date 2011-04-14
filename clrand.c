@@ -44,6 +44,8 @@ int clrand_update_seed(clrand_context* ctx) {
 	error = clEnqueueWriteBuffer(ctx->queue, ctx->dev_seed, CL_TRUE, 0, sizeof(cl_uint) * buffer_size, buffer, 0, NULL, NULL);
 	check_for_error(error, "Can not upload new seed");
 	free(buffer);
+
+	return 0;
 }
 
 
@@ -70,12 +72,16 @@ int clrand_init(clrand_context* ctx, cl_context cl_ctx, cl_command_queue queue, 
 	error = clBuildProgram(ctx->program, 0, NULL, NULL, NULL, NULL);
 	check_for_error(error, "clrand::Can not build program");
 
-	ctx->uniform = clCreateKernel(ctx->program, "uniform_rng", &error);
-	check_for_error(error, "Can not create kernel");
+	ctx->uniform = clCreateKernel(ctx->program, "uniform_int", &error);
+	check_for_error(error, "Can not create kernel uniform_int");
+	ctx->uniform_float = clCreateKernel(ctx->program, "uniform_float", &error);
+	check_for_error(error, "Can not create kernel uniform_float");
 
 	free(content);
 
 	clrand_update_seed(ctx);
+
+	return 0;
 }
 
 int clrand_release(clrand_context* ctx) {
@@ -84,11 +90,14 @@ int clrand_release(clrand_context* ctx) {
 	clReleaseProgram(ctx->program);
 	clReleaseContext(ctx->context);
 	clReleaseCommandQueue(ctx->queue);
+
+	return 0;
 }
 
 int clrand_set_seed(clrand_context* ctx, int seed) {
 	srand(seed);
 	clrand_update_seed(ctx);
+	return 0;
 }
 
 int clrand_uniform(clrand_context* ctx, cl_mem buffer, cl_int buf_size) {
@@ -100,10 +109,29 @@ int clrand_uniform(clrand_context* ctx, cl_mem buffer, cl_int buf_size) {
 	error |= clSetKernelArg(kernel, arg++, sizeof(cl_mem), &ctx->dev_seed);
 	error |= clSetKernelArg(kernel, arg++, sizeof(cl_mem), &buffer);
 	error != clSetKernelArg(kernel, arg++, sizeof(cl_mem), &buf_size);
-	check_for_error(error, "Can not set kernel arguments for uniform");
+	check_for_error(error, "Can not set kernel arguments for uniform float");
 
 	error = clEnqueueNDRangeKernel(ctx->queue, kernel, 1, NULL, &ctx->parallel_thread_num, NULL, 0, NULL, NULL);
 	check_for_error(error, "Can not call uniform kernel");
+
+	return 0;
+}
+
+int clrand_uniform_float(clrand_context* ctx, cl_mem buffer, cl_int buf_size) {
+	cl_kernel kernel = ctx->uniform_float;
+	
+	cl_int error = 0;
+	int arg = 0;
+	
+	error |= clSetKernelArg(kernel, arg++, sizeof(cl_mem), &ctx->dev_seed);
+	error |= clSetKernelArg(kernel, arg++, sizeof(cl_mem), &buffer);
+	error != clSetKernelArg(kernel, arg++, sizeof(cl_mem), &buf_size);
+	check_for_error(error, "Can not set kernel arguments for uniform float");
+
+	error = clEnqueueNDRangeKernel(ctx->queue, kernel, 1, NULL, &ctx->parallel_thread_num, NULL, 0, NULL, NULL);
+	check_for_error(error, "Can not call uniform float kernel");
+
+	return 0;
 }
 
 int clrand_rand_normal(clrand_context* ctx, cl_mem buffer) {
