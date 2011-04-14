@@ -28,6 +28,21 @@ void load_kernels(char* content, size_t size) {
 	fclose(fp);
 }
 
+void show_build_log(clrand_context* ctx) {
+	cl_build_status build_status;
+	cl_int error;
+	error = clGetProgramBuildInfo(ctx->program, ctx->device, CL_PROGRAM_BUILD_STATUS, sizeof(cl_build_status), &build_status, NULL);
+
+	size_t ret_val_size;
+	error = clGetProgramBuildInfo(ctx->program, ctx->device, CL_PROGRAM_BUILD_LOG, 0, NULL, &ret_val_size);
+
+	char *build_log = (char* )malloc(ret_val_size+1);
+	error = clGetProgramBuildInfo(ctx->program, ctx->device, CL_PROGRAM_BUILD_LOG, ret_val_size, build_log, NULL);
+	build_log[ret_val_size] = '\0';
+	printf("BUILD LOG: \n%s", build_log);
+	free(build_log);
+}
+
 int clrand_update_seed(clrand_context* ctx) {
 	int i = 0;
 	cl_int error;
@@ -49,9 +64,10 @@ int clrand_update_seed(clrand_context* ctx) {
 }
 
 
-int clrand_init(clrand_context* ctx, cl_context cl_ctx, cl_command_queue queue, int parallel_thread_num) {
+int clrand_init(clrand_context* ctx, cl_device_id device, cl_context cl_ctx, cl_command_queue queue, int parallel_thread_num) {
 	cl_int error;
 
+	ctx->device = device;
 	ctx->dev_seed = NULL;
 	ctx->context = cl_ctx;
 	ctx->queue = queue;
@@ -70,12 +86,15 @@ int clrand_init(clrand_context* ctx, cl_context cl_ctx, cl_command_queue queue, 
 	check_for_error(error, "clrand::Can not create program from sources");
 
 	error = clBuildProgram(ctx->program, 0, NULL, NULL, NULL, NULL);
+	show_build_log(ctx);
 	check_for_error(error, "clrand::Can not build program");
 
 	ctx->uniform = clCreateKernel(ctx->program, "uniform_int", &error);
 	check_for_error(error, "Can not create kernel uniform_int");
 	ctx->uniform_float = clCreateKernel(ctx->program, "uniform_float", &error);
 	check_for_error(error, "Can not create kernel uniform_float");
+	ctx->normal_float = clCreateKernel(ctx->program, "normal_float", &error);
+	check_for_error(error, "Can not create kernel normal_float");
 
 	free(content);
 
@@ -87,6 +106,8 @@ int clrand_init(clrand_context* ctx, cl_context cl_ctx, cl_command_queue queue, 
 int clrand_release(clrand_context* ctx) {
 	if(ctx->dev_seed) clReleaseMemObject(ctx->dev_seed);
 	clReleaseKernel(ctx->uniform);
+	clReleaseKernel(ctx->uniform_float);
+	clReleaseKernel(ctx->normal_float);
 	clReleaseProgram(ctx->program);
 	clReleaseContext(ctx->context);
 	clReleaseCommandQueue(ctx->queue);
@@ -134,6 +155,20 @@ int clrand_uniform_float(clrand_context* ctx, cl_mem buffer, cl_int buf_size) {
 	return 0;
 }
 
-int clrand_rand_normal(clrand_context* ctx, cl_mem buffer) {
+int clrand_normal_float(clrand_context* ctx, cl_mem buffer, cl_int buf_size) {
+	cl_kernel kernel = ctx->normal_float;
+	
+	cl_int error = 0;
+	int arg = 0;
+	
+	error |= clSetKernelArg(kernel, arg++, sizeof(cl_mem), &ctx->dev_seed);
+	error |= clSetKernelArg(kernel, arg++, sizeof(cl_mem), &buffer);
+	error != clSetKernelArg(kernel, arg++, sizeof(cl_mem), &buf_size);
+	check_for_error(error, "Can not set kernel arguments for normal float");
 
+	error = clEnqueueNDRangeKernel(ctx->queue, kernel, 1, NULL, &ctx->parallel_thread_num, NULL, 0, NULL, NULL);
+	check_for_error(error, "Can not call normal float kernel");
+
+	return 0;
 }
+

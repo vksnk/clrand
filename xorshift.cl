@@ -15,7 +15,7 @@ float2 normal_box_muller(uint4* ctx) {
 	float u1 = xorshift_float(ctx);
 	float u2 = xorshift_float(ctx);
 
-	float ln_u1 = sqrt(-2.0f * ln(u1));
+	float ln_u1 = sqrt(-2.0f * log(u1));
 
 	float p2_u2 = 2.0f * M_MY_PI * u2;
 	
@@ -50,6 +50,23 @@ __kernel void uniform_float(__global uint4* context, __global float* output, int
 
 	for(int i = 0; i < num_per_thread; i++) {
 		output[base_offset + i] = xorshift_float(&ctx);
+	}
+
+	//save context back to global memory
+	context[tid] = ctx;
+}
+
+__kernel void normal_float(__global uint4* context, __global float2* output, int len)
+{
+	int num_per_thread = len / get_global_size(0) / 2;
+	int tid = get_global_id(0);
+	
+	//read context from global memory
+	uint4 ctx = context[tid];
+	int base_offset = tid * num_per_thread;
+
+	for(int i = 0; i < num_per_thread; i++) {
+		output[base_offset + i] = normal_box_muller(&ctx);
 	}
 
 	//save context back to global memory

@@ -8,7 +8,7 @@
 #include "clrand.h"
 
 const int BUF_SIZE =  1024 * 1024;
-const int HIST_SIZE = 16;
+const int HIST_SIZE = 64;
 const int THREAD_NUM = 256;
 
 #define DATA_TYPE float
@@ -41,6 +41,7 @@ void print_hist(DATA_TYPE* data) {
 		//printf("%f ", data[i]);
 		//int val = (double)(data[i]) / UINT_MAX * HIST_SIZE;
 		int val = data[i] * HIST_SIZE;
+		if((val < 0) || (val >= HIST_SIZE)) continue;
 		hist[val]++;
 	}
 	printf("Histogram:: \n");
@@ -77,13 +78,13 @@ int main() {
 	check_for_error(error, "Can not create command queue");
 
 	clock_t gpu_start = clock();
-	clrand_init(&rnd, context, queue, THREAD_NUM);
+	clrand_init(&rnd, device_id, context, queue, THREAD_NUM);
 	//clrand_set_seed(&rnd, time(NULL));
 
 	output = clCreateBuffer(context, CL_MEM_WRITE_ONLY, sizeof(DATA_TYPE) * BUF_SIZE, NULL, NULL);
 
 
-	clrand_uniform_float(&rnd, output, BUF_SIZE);
+	clrand_normal_float(&rnd, output, BUF_SIZE);
 	clFinish(queue);
 	clock_t gpu_end = clock();
 	
