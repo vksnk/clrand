@@ -72,7 +72,7 @@ void pretty_print_hist(DATA_TYPE* data) {
 	for(i = 0; i < HIST_SIZE; i++) if(max_at_hist < hist[i]) max_at_hist = hist[i];
 
 	for(i = 0; i < HIST_SIZE; i++) {
-		printf("\n%7d :", hist[i]);
+		printf("\n%8d :", hist[i]);
 		int j = 0;
 		int len = (float)(hist[i] - 1) / max_at_hist * HIST_LINE_LEN + 1;
 		for(j = 0; j < len; j++) printf("*");
