@@ -2,14 +2,16 @@
 #include <stdlib.h>
 #include <time.h>
 #include <limits.h>
+#include <string.h>
 
 #include <CL/cl.h>
 
 #include "clrand.h"
 
 const int BUF_SIZE =  1024 * 1024;
-const int HIST_SIZE = 64;
-const int THREAD_NUM = 256;
+const int HIST_SIZE = 16;
+const int THREAD_NUM = 1;
+const int HIST_LINE_LEN = 20;
 
 #define DATA_TYPE float
 
@@ -47,6 +49,34 @@ void print_hist(DATA_TYPE* data) {
 	printf("Histogram:: \n");
 	for(i = 0; i < HIST_SIZE; i++) printf("%d ", hist[i]);
 
+	printf("\n");
+}
+
+void pretty_print_hist(DATA_TYPE* data) {
+	int i = 0;
+	DATA_TYPE min_val = 10000000, max_val = 0;
+	for(i = 0; i < BUF_SIZE; i++) {
+		if(data[i] > max_val) max_val = data[i];
+		if(data[i] < min_val) min_val = data[i];
+	}
+	int hist[HIST_SIZE];
+	//printf("\n%f %f\n", min_val, max_val);
+	memset(hist, 0, HIST_SIZE*sizeof(int));
+	for(i = 0; i < BUF_SIZE; i++) {
+		int val = ((float)data[i] - min_val) / (max_val - min_val) * HIST_SIZE;
+		//printf("%f %d\n", data[i], val);
+		hist[val]++;
+	}
+	
+	int max_at_hist = 0;
+	for(i = 0; i < HIST_SIZE; i++) if(max_at_hist < hist[i]) max_at_hist = hist[i];
+
+	for(i = 0; i < HIST_SIZE; i++) {
+		printf("\n%7d :", hist[i]);
+		int j = 0;
+		int len = (float)(hist[i] - 1) / max_at_hist * HIST_LINE_LEN + 1;
+		for(j = 0; j < len; j++) printf("*");
+	}
 	printf("\n");
 }
 
@@ -91,7 +121,7 @@ int main() {
 	DATA_TYPE *data = (DATA_TYPE *)malloc(sizeof(DATA_TYPE) * BUF_SIZE);
 	clEnqueueReadBuffer(queue, output, CL_TRUE, 0, sizeof(DATA_TYPE) * BUF_SIZE, data, 0, NULL, NULL);  
 	
-	print_hist(data);
+	pretty_print_hist(data);
 	
 	free(data);
 
