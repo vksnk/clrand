@@ -8,9 +8,9 @@
 
 #include "clrand.h"
 
-const int BUF_SIZE =  1024 * 1024;
+const int BUF_SIZE = 1024 * 1024;
 const int HIST_SIZE = 16;
-const int THREAD_NUM = 1;
+const int THREAD_NUM = 256;
 const int HIST_LINE_LEN = 20;
 
 #define DATA_TYPE float
@@ -109,7 +109,7 @@ int main() {
 
 	clock_t gpu_start = clock();
 	clrand_init(&rnd, device_id, context, queue, THREAD_NUM);
-	//clrand_set_seed(&rnd, time(NULL));
+	clrand_set_seed(&rnd, time(NULL));
 
 	output = clCreateBuffer(context, CL_MEM_WRITE_ONLY, sizeof(DATA_TYPE) * BUF_SIZE, NULL, NULL);
 

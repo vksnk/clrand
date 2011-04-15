@@ -19,7 +19,10 @@ float2 normal_box_muller(uint4* ctx) {
 
 	float p2_u2 = 2.0f * M_MY_PI * u2;
 	
-	return (ln_u1 * cos(p2_u2), ln_u1 * sin(p2_u2));
+	float2 res;
+	res.x = ln_u1 * cos(p2_u2);
+	res.y = ln_u1 * sin(p2_u2);
+	return res;
 }
 
 __kernel void uniform_int(__global uint4* context, __global uint* output, int len)
